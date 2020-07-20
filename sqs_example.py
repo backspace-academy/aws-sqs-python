@@ -5,27 +5,30 @@ import boto3
 from botocore.exceptions import ClientError, ParamValidationError
 
 # Create AWS service client and set region
-s3 = boto3.client('s3', region_name='us-east-1')
+sqs = boto3.client('sqs', region_name='us-east-1')
 
-# Call the S3 service to get a list of buckets in the account
-def s3_list_buckets():
+# Create an SQS queue
+def create_sqs_queue(sqs_queue_name):
     try:
-        data = s3.list_buckets()
-        return data
+        data = sqs.create_queue(
+            QueueName = sqs_queue_name,
+            Attributes = {
+                'ReceiveMessageWaitTimeSeconds': '20',
+                'VisibilityTimeout': '60'
+            }
+        )
+        return data['QueueUrl']
     # An error occurred
     except ParamValidationError as e:
         print("Parameter validation error: %s" % e)
     except ClientError as e:
         print("Client error: %s" % e)
 
-
 # Main program
 def main():
-    print('Code loaded successfully')
-    response = s3_list_buckets()
-    print('S3 Buckets in your account:')
-    for bucket in response['Buckets']:
-        print(f'  {bucket["Name"]}')    
+    sqs_queue_url = create_sqs_queue('backspace-lab')
+    print('Successfully created SQS queue URL '+ sqs_queue_url )
 
 if __name__ == '__main__':
     main()
+    
